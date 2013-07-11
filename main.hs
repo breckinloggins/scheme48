@@ -6,6 +6,8 @@ import System.Environment
 
 main :: IO ()
 main = do
+	putStrLn "Please type your name"
+	name <- getLine
 	args <- getArgs
-	putStrLn ("SUM: " ++ show (sum (map read args :: [Int])))
+	putStrLn (name ++ ", sum is: " ++ show (sum (map read args :: [Int])))
 
