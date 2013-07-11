@@ -7,5 +7,5 @@ import System.Environment
 main :: IO ()
 main = do
 	args <- getArgs
-	putStrLn ("Hello, " ++ unwords args)
+	putStrLn ("SUM: " ++ show (sum (map read args :: [Int])))
 
