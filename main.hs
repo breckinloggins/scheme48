@@ -74,13 +74,13 @@ parseHashLiteral = do
 			return $ f digits
 		
 parseNumber :: Parser LispVal
-parseNumber = parseHashLiteral
-	<|> (liftM (Number . read) $ many1 digit)
+parseNumber = (liftM (Number . read) $ many1 digit)
 
 	
 parseExpr :: Parser LispVal
 parseExpr = parseNumber
 	<|> parseString
+	<|> parseHashLiteral
 	<|> parseAtom
 
 readExpr :: String -> String
