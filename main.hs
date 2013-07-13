@@ -21,10 +21,13 @@ spaces = skipMany1 space
 symbol :: Parser Char
 symbol = oneOf "!#$%&|*+-/:<=>?@^_~"
 
+escapedString :: Parser String
+escapedString = many (noneOf "\"")
+
 parseString :: Parser LispVal
 parseString = do
 	char '"'
-	x <- many (noneOf "\"")
+	x <- escapedString
 	char '"'
 	return $ String x
 
@@ -39,14 +42,7 @@ parseAtom = do
 		_ -> Atom atom
 
 parseNumber :: Parser LispVal
-parseNumber = parseNumberCh2P1Ex1
-
--- Original parseNumber from Ch 02
-parseNumberOrig :: Parser LispVal
-parseNumberOrig = liftM (Number . read) $ many1 digit
-
-parseNumberCh2P1Ex1 :: Parser LispVal
-parseNumberCh2P1Ex1 = many1 digit >>= \x -> return $ (Number . read) x
+parseNumber = liftM (Number . read) $ many1 digit
 	
 parseExpr :: Parser LispVal
 parseExpr = parseAtom
@@ -61,6 +57,9 @@ readExpr input = case parse parseExpr "lisp" input of
 main :: IO ()
 main = do
 	args <- getArgs
-	putStrLn (case length args of
-		0 -> "no input"
-		_ -> (readExpr (args !! 0)))
+	code <- case length args of
+		0 -> getLine
+		_ -> return $ (args !! 0)
+
+	putStrLn (readExpr code)
+	
