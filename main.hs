@@ -39,10 +39,16 @@ parseAtom = do
 		_ -> Atom atom
 
 parseNumber :: Parser LispVal
-parseNumber = parseNumberOrig
+parseNumber = parseNumberCh2P1Ex1
 
 -- Original parseNumber from Ch 02
+parseNumberOrig :: Parser LispVal
 parseNumberOrig = liftM (Number . read) $ many1 digit
+
+parseNumberCh2P1Ex1 :: Parser LispVal
+parseNumberCh2P1Ex1 = do
+	x <- many1 digit
+	return $ (Number . read) x
 
 parseExpr :: Parser LispVal
 parseExpr = parseAtom
