@@ -47,10 +47,7 @@ parseAtom = do
 	first <- letter <|> symbol
 	rest <- many (letter <|> digit <|> symbol)
 	let atom = first:rest
-	return $ case atom of
-		"#t" -> Bool True
-		"#f" -> Bool False
-		_ -> Atom atom
+	return $ Atom atom
 
 fromBase :: Int -> String -> Int
 fromBase base = fst . head . readInt base ((<base).digitToInt) digitToInt
