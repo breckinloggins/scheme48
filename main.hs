@@ -6,6 +6,8 @@ module Main where
 import Text.ParserCombinators.Parsec hiding (spaces)
 import System.Environment
 import Control.Monad
+import Numeric
+import Data.Char
 
 data LispVal = Atom String
 	| List [LispVal]
@@ -50,13 +52,39 @@ parseAtom = do
 		"#f" -> Bool False
 		_ -> Atom atom
 
+fromBase :: Int -> String -> Int
+fromBase base = fst . head . readInt base ((<base).digitToInt) digitToInt
+
+hashLiteralInfo = [
+	('f', (Nothing, \_ -> Bool False)),
+	('t', (Nothing, \_ -> Bool True)),
+	('b', (Just "01", Number . toInteger . fromBase 2)),
+	('o', (Just "01234567", Number . toInteger . fromBase 8)),
+	('d', (Just "0123456789", Number . toInteger . fromBase 10)),
+	('h', (Just "0123456789abcdefABCDEF", Number . toInteger . fromBase 16))
+	]
+
+parseHashLiteral :: Parser LispVal
+parseHashLiteral = do
+	char '#'
+	c <- oneOf (map fst hashLiteralInfo)
+	let literalInfo = lookup c hashLiteralInfo
+	case literalInfo of
+		Nothing -> fail "Internal parse error: unregistered literal info"
+		Just (Nothing, f) -> return $ f "unneeded" -- I know there's a more idiomatic way to do that
+		Just (Just validChars, f) -> do
+			digits <- many (oneOf validChars)
+			return $ f digits
+		
 parseNumber :: Parser LispVal
-parseNumber = liftM (Number . read) $ many1 digit
+parseNumber = parseHashLiteral
+	<|> (liftM (Number . read) $ many1 digit)
+
 	
 parseExpr :: Parser LispVal
-parseExpr = parseAtom
+parseExpr = parseNumber
 	<|> parseString
-	<|> parseNumber
+	<|> parseAtom
 
 readExpr :: String -> String
 readExpr input = case parse parseExpr "lisp" input of
