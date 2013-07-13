@@ -55,10 +55,10 @@ fromBase base = fst . head . readInt base ((<base).digitToInt) digitToInt
 hashLiteralInfo = [
 	('f', (Nothing, \_ -> Bool False)),
 	('t', (Nothing, \_ -> Bool True)),
-	('b', (Just "01", Number . toInteger . fromBase 2)),
-	('o', (Just "01234567", Number . toInteger . fromBase 8)),
-	('d', (Just "0123456789", Number . toInteger . fromBase 10)),
-	('h', (Just "0123456789abcdefABCDEF", Number . toInteger . fromBase 16))
+	('b', (Just (many (oneOf "01")), Number . toInteger . fromBase 2)),
+	('o', (Just (many (oneOf "01234567")), Number . toInteger . fromBase 8)),
+	('d', (Just (many (oneOf "0123456789")), Number . toInteger . fromBase 10)),
+	('h', (Just (many (oneOf "0123456789abcdefABCDEF")), Number . toInteger . fromBase 16))
 	]
 
 parseHashLiteral :: Parser LispVal
@@ -69,8 +69,8 @@ parseHashLiteral = do
 	case literalInfo of
 		Nothing -> fail "Internal parse error: unregistered literal info"
 		Just (Nothing, f) -> return $ f "unneeded" -- I know there's a more idiomatic way to do that
-		Just (Just validChars, f) -> do
-			digits <- many (oneOf validChars)
+		Just (Just literalParser, f) -> do
+			digits <- literalParser
 			return $ f digits
 		
 parseNumber :: Parser LispVal
