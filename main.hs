@@ -21,13 +21,18 @@ spaces = skipMany1 space
 symbol :: Parser Char
 symbol = oneOf "!#$%&|*+-/:<=>?@^_~"
 
-escapedString :: Parser String
-escapedString = many (noneOf "\"")
+escapeCharacer :: Parser Char
+escapeCharacer = do
+	char '\\'
+	c <- anyChar
+	case c of
+		'"' -> return '"'
+		_ -> fail "Unrecognized escape sequence"
 
 parseString :: Parser LispVal
 parseString = do
 	char '"'
-	x <- escapedString
+	x <- many (escapeCharacer <|> noneOf "\"")
 	char '"'
 	return $ String x
 
