@@ -27,6 +27,10 @@ escapeCharacer = do
 	c <- anyChar
 	case c of
 		'"' -> return '"'
+		'n' -> return '\n'
+		'r' -> return '\r'
+		't' -> return '\t'
+		'\\' -> return '\\'
 		_ -> fail "Unrecognized escape sequence"
 
 parseString :: Parser LispVal
