@@ -91,9 +91,8 @@ readExpr input = case parse parseExpr "lisp" input of
 main :: IO ()
 main = do
 	args <- getArgs
-	code <- case length args of
-		0 -> getLine
-		_ -> return $ (args !! 0)
+	case length args of
+		0 -> getLine >>= \line -> putStrLn (readExpr line)
+		_ -> mapM_ putStrLn (map readExpr args)
 
-	putStrLn (readExpr code)
 	
