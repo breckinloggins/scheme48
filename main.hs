@@ -14,6 +14,7 @@ data LispVal = Atom String
 	| DottedList [LispVal] LispVal
 	| Number Integer
 	| String String
+	| Char Char
 	| Bool Bool
 	deriving Show
 
@@ -38,33 +39,33 @@ escapeCharacer = do
 parseString :: Parser LispVal
 parseString = do
 	char '"'
-	x <- many (escapeCharacer <|> noneOf "\"")
+	x <- many $ escapeCharacer <|> noneOf "\""
 	char '"'
 	return $ String x
 
 parseAtom :: Parser LispVal
 parseAtom = do
 	first <- letter <|> symbol
-	rest <- many (letter <|> digit <|> symbol)
+	rest <- many $ letter <|> digit <|> symbol
 	let atom = first:rest
 	return $ Atom atom
 
 fromBase :: Int -> String -> Int
-fromBase base = fst . head . readInt base ((<base).digitToInt) digitToInt
+fromBase base = fst . head . readInt base ((< base) . digitToInt) digitToInt
 
 hashLiteralInfo = [
 	('f', (Nothing, \_ -> Bool False)),
 	('t', (Nothing, \_ -> Bool True)),
-	('b', (Just (many (oneOf "01")), Number . toInteger . fromBase 2)),
-	('o', (Just (many (oneOf "01234567")), Number . toInteger . fromBase 8)),
-	('d', (Just (many (oneOf "0123456789")), Number . toInteger . fromBase 10)),
-	('h', (Just (many (oneOf "0123456789abcdefABCDEF")), Number . toInteger . fromBase 16))
+	('b', (Just $ many $ oneOf "01", Number . toInteger . fromBase 2)),
+	('o', (Just $ many $ oneOf "01234567", Number . toInteger . fromBase 8)),
+	('d', (Just $ many $ oneOf "0123456789", Number . toInteger . fromBase 10)),
+	('h', (Just $ many $ oneOf "0123456789abcdefABCDEF", Number . toInteger . fromBase 16))
 	]
 
 parseHashLiteral :: Parser LispVal
 parseHashLiteral = do
 	char '#'
-	c <- oneOf (map fst hashLiteralInfo)
+	c <- oneOf $ map fst hashLiteralInfo
 	let literalInfo = lookup c hashLiteralInfo
 	case literalInfo of
 		Nothing -> fail "Internal parse error: unregistered literal info"
@@ -74,7 +75,7 @@ parseHashLiteral = do
 			return $ f digits
 		
 parseNumber :: Parser LispVal
-parseNumber = (liftM (Number . read) $ many1 digit)
+parseNumber = liftM (Number . read) $ many1 digit
 
 	
 parseExpr :: Parser LispVal
@@ -92,7 +93,7 @@ main :: IO ()
 main = do
 	args <- getArgs
 	case length args of
-		0 -> getLine >>= \line -> putStrLn (readExpr line)
-		_ -> mapM_ putStrLn (map readExpr args)
+		0 -> getLine >>= \line -> putStrLn $ readExpr line
+		_ -> mapM_ putStrLn $ map readExpr args
 
 	
