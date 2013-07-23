@@ -3,9 +3,10 @@
 
 module Main where
 
-import Text.ParserCombinators.Parsec hiding (spaces)
+import Text.ParserCombinators.Parsec hiding (many, spaces, (<|>))
 import System.Environment
 import Control.Monad
+import Control.Applicative
 import Numeric
 import Data.Char
 
@@ -53,27 +54,26 @@ parseAtom = do
 fromBase :: Int -> String -> Int
 fromBase base = fst . head . readInt base ((< base) . digitToInt) digitToInt
 
+-- https://news.ycombinator.com/item?id=6091386
+hashLiteralInfo :: [(Char, Parser LispVal)]
 hashLiteralInfo = [
-	('f', (Nothing, \_ -> Bool False)),
-	('t', (Nothing, \_ -> Bool True)),
-	('b', (Just $ many $ oneOf "01", Number . toInteger . fromBase 2)),
-	('o', (Just $ many $ oneOf "01234567", Number . toInteger . fromBase 8)),
-	('d', (Just $ many $ oneOf "0123456789", Number . toInteger . fromBase 10)),
-	('h', (Just $ many $ oneOf "0123456789abcdefABCDEF", Number . toInteger . fromBase 16))
+	('f', pure $ Bool False),
+	('t', pure $ Bool True),
+	('b', fmap (Number . toInteger . fromBase 2) (many $ oneOf "01")),
+	('o', fmap (Number . toInteger . fromBase 8) (many $ oneOf "01234567")),
+	('d', fmap (Number . toInteger . fromBase 10) (many $ oneOf "0123456789")),
+	('h', fmap (Number . toInteger . fromBase 16) (many $ oneOf "0123456789abcdefABCDEF"))
 	]
-
+	
 parseHashLiteral :: Parser LispVal
 parseHashLiteral = do
 	char '#'
 	c <- oneOf $ map fst hashLiteralInfo
-	let literalInfo = lookup c hashLiteralInfo
-	case literalInfo of
+	case lookup c hashLiteralInfo of
+		Just x -> x
 		Nothing -> fail "Internal parse error: unregistered literal info"
-		Just (Nothing, f) -> return $ f "unneeded" -- I know there's a more idiomatic way to do that
-		Just (Just literalParser, f) -> do
-			digits <- literalParser
-			return $ f digits
-		
+
+
 parseNumber :: Parser LispVal
 parseNumber = liftM (Number . read) $ many1 digit
 
